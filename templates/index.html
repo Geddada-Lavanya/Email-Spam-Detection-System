@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spam Detection System</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            background: linear-gradient(135deg, #b1eae6, #a5bcdb);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #4f46e5, #6366f1);
+            color: white;
+            padding: 20px;
+            box-shadow: 4px 0 12px rgba(0,0,0,0.1);
+        }
+
+        .sidebar h2 {
+            margin-top: 0;
+            font-size: 22px;
+        }
+
+        .sidebar .card {
+            background: rgba(242, 240, 246, 0.15);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .sidebar .metric {
+            font-size: 26px;
+            font-weight: bold;
+            color: #bbf7d0;
+        }
+
+        /* Main content */
+        .main {
+            flex: 1;
+            padding: 40px;
+        }
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            color: #1e293b;
+        }
+
+        .header p {
+            color: #475569;
+            margin-top: 6px;
+        }
+
+        .card {
+            background: rgb(245, 246, 249);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 800px;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: #1e293b;
+        }
+
+        textarea {
+            width: 100%;
+            height: 140px;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #cbd5f5;
+            font-size: 15px;
+            resize: none;
+            margin-top: 12px;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+        }
+
+        .actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+
+        .btn-secondary {
+            background-color: #e0e7ff;
+            color: #1e293b;
+        }
+
+        .btn-secondary:hover {
+            background-color: #c7d2fe;
+        }
+
+        #result {
+            margin-top: 18px;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px 14px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .spam {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .not-spam {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>📊 Model Details</h2>
+
+        <div class="card">
+            <p><strong>Model:</strong> Neural Network</p>
+            <p><strong>Accuracy:</strong></p>
+            <div class="metric">97%</div>
+        </div>
+
+        <div class="card">
+            <p>📁 Dataset: SMS Spam Collection</p>
+            <p>⚙️ Algorithm: TF-IDF + NN</p>
+        </div>
+    </div>
+
+   <hr style="margin: 25px 0;">
+
+<button class="btn-secondary" onclick="toggleDataset()">📂 Show Dataset</button>
+
+<div id="datasetContainer" style="display:none; margin-top: 20px;">
+    <h3>📊 Dataset Preview</h3>
+    <div style="overflow-x:auto;">
+        <table id="datasetTable" border="1" cellpadding="8" style="border-collapse: collapse; width: 100%;">
+            <thead>
+                <tr>
+                    <th>Label</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+    <!-- Main Content -->
+    <div class="main">
+        <div class="header">
+            <h1>📩 Spam Detection System</h1>
+            <p>Enter a message to predict whether it is spam or not spam.</p>
+        </div>
+
+        <div class="card">
+            <h2>🧾 Message Input</h2>
+
+            <textarea id="message" placeholder="Type your message here..."></textarea>
+
+            <div class="actions">
+                <button class="btn-primary" onclick="checkSpam()">Check Message</button>
+                <button class="btn-secondary" onclick="clearText()">Clear</button>
+            </div>
+
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        async function checkSpam() {
+            const message = document.getElementById("message").value;
+            const resultDiv = document.getElementById("result");
+
+            if (message.trim() === "") {
+                resultDiv.innerHTML = "⚠️ Please enter a message.";
+                resultDiv.className = "";
+                return;
+            }
+
+            resultDiv.innerHTML = "⏳ Checking...";
+            resultDiv.className = "";
+
+            const response = await fetch("/predict", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+
+            if (data.result === "Spam") {
+                resultDiv.innerHTML = "🚨 Result: Spam Message";
+                resultDiv.className = "spam";
+            } else {
+                resultDiv.innerHTML = "✅ Result: Not Spam Message";
+                resultDiv.className = "not-spam";
+            }
+        }
+
+        function clearText() {
+            document.getElementById("message").value = "";
+            document.getElementById("result").innerHTML = "";
+            document.getElementById("result").className = "";
+        }
+
+async function toggleDataset() {
+    const container = document.getElementById("datasetContainer");
+    const tableBody = document.querySelector("#datasetTable tbody");
+
+    if (container.style.display === "none") {
+        container.style.display = "block";
+        tableBody.innerHTML = "<tr><td colspan='2'>Loading...</td></tr>";
+
+        const response = await fetch("/dataset");
+        const data = await response.json();
+
+        tableBody.innerHTML = "";
+        data.forEach(row => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${row.label}</td><td>${row.message}</td>`;
+            tableBody.appendChild(tr);
+        });
+    } else {
+        container.style.display = "none";
+    }
+}
+
+    </script>
+
+</body>
+</html>
